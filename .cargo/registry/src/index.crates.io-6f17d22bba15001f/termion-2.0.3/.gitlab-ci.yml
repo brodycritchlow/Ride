@@ -1,0 +1,43 @@
+image: "redoxos/redoxer"
+
+stages:
+    - build
+    - test
+
+cache:
+    paths:
+        - target/
+
+build:linux:stable:
+    stage: build
+    script:
+        - rustup update stable
+        - cargo +stable build --verbose
+
+build:linux:
+    stage: build
+    script: cargo +nightly build --verbose
+
+build:redox:
+    stage: build
+    script: redoxer build --verbose
+
+test:linux:stable:
+    stage: test
+    dependencies:
+        - build:linux:stable
+    script:
+        - rustup update stable
+        - script -c "cargo +stable test --verbose"
+
+test:linux:
+    stage: test
+    dependencies:
+        - build:linux
+    script: script -c "cargo +nightly test --verbose"
+
+test:redox:
+    stage: test
+    dependencies:
+        - build:redox
+    script: redoxer test --verbose

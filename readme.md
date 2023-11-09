@@ -1,0 +1,1 @@
+We should later on use Crossterm for support on windows instead of termion.
