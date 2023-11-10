@@ -1,10 +1,10 @@
 use crate::Position;
 
 use std::io::{self, stdout, Write};
+use termion::color;
 use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::{IntoRawMode, RawTerminal};
-use termion::color;
 
 pub struct Size {
     pub width: u16,
@@ -35,7 +35,7 @@ impl Terminal {
 
     #[allow(clippy::cast_possible_truncation)]
     pub fn cursor_position(position: &Position) {
-        let Position{mut x, mut y} = position;
+        let Position { mut x, mut y } = position;
         x = x.saturating_add(1);
         y = y.saturating_add(1);
         let x = x as u16;
@@ -65,12 +65,12 @@ impl Terminal {
         print!("{}", color::Bg(color));
     }
     pub fn reset_bg_color() {
-      print!("{}", color::Bg(color::Reset));
+        print!("{}", color::Bg(color::Reset));
     }
     pub fn set_fg_color(color: color::Rgb) {
-      print!("{}", color::Fg(color));
+        print!("{}", color::Fg(color));
     }
     pub fn reset_fg_color() {
-      print!("{}", color::Fg(color::Reset));
+        print!("{}", color::Fg(color::Reset));
     }
 }

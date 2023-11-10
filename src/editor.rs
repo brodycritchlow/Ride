@@ -55,7 +55,7 @@ impl Editor {
     }
     pub fn default() -> Self {
         let args: Vec<String> = env::args().collect();
-        let mut initial_status = String::from("HELP: Ctrl-Q = quit");
+        let mut initial_status = String::from("HELP: Ctrl-S = save | Ctrl-Q = quit");
         let document = if args.len() > 1 {
             let file_name = &args[1];
             let doc = Document::open(&file_name);
@@ -91,7 +91,7 @@ impl Editor {
     pub fn draw_row(&self, row: &Row) {
         let width = self.terminal.size().width as usize;
         let start = self.offset.x;
-        let end = self.offset.x + width;
+        let end = self.offset.x  width;
 
         let row = row.render(start, end);
 
@@ -102,7 +102,7 @@ impl Editor {
 
         for terminal_row in 0..height {
             Terminal::clear_current_line();
-            if let Some(row) = self.document.row(terminal_row as usize + self.offset.y) {
+            if let Some(row) = self.document.row(terminal_row as usize  self.offset.y) {
                 self.draw_row(row);
             } else if self.document.is_empty() && terminal_row == height / 3 {
                 self.draw_welcome_message();
@@ -145,7 +145,7 @@ impl Editor {
             self.cursor_position.y.saturating_add(1),
             self.document.len()
         );
-        let len = status.len() + line_indicator.len();
+        let len = status.len()  line_indicator.len();
         if width > len {
             status.push_str(&" ".repeat(width - len));
         }
@@ -162,19 +162,36 @@ impl Editor {
         Terminal::clear_current_line();
         let message = &self.status_message;
         if Instant::now() - message.time < Duration::new(5, 0) {
-          let mut text = message.text.clone();
-          text.truncate(self.terminal.size().width as usize);
-          print!("{}", text);            
+            let mut text = message.text.clone();
+            text.truncate(self.terminal.size().width as usize);
+            print!("{}", text);
         }
+    }
+    fn save(&mut self) {            
+      if self.document.file_name.is_none() {            
+          let new_name = self.prompt("Save as: ").unwrap_or(None);            
+          if new_name.is_none() {            
+              self.status_message = StatusMessage::from("Save aborted.".to_string());            
+              return;            
+          }            
+          self.document.file_name = new_name;            
+      }            
+
+      if self.document.save().is_ok() {            
+          self.status_message = StatusMessage::from("File saved successfully.".to_string());            
+      } else {            
+          self.status_message = StatusMessage::from("Error writing file!".to_string());            
+      }            
     }
     fn process_keypress(&mut self) -> Result<(), std::io::Error> {
         let pressed_key = Terminal::read_key()?;
         match pressed_key {
             Key::Ctrl('q') => self.should_quit = true,
+            Key::Ctrl('s') => self.save(),
             Key::Char(c) => {
                 self.document.insert(&self.cursor_position, c);
                 self.move_cursor(Key::Right);
-            },
+            }
             Key::Delete => self.document.delete(&self.cursor_position),
             Key::Backspace => {
                 if self.cursor_position.x > 0 || self.cursor_position.y > 0 {
@@ -199,7 +216,7 @@ impl Editor {
         let Position { x, y } = self.cursor_position;
         let width = self.terminal.size().width as usize;
         let height = self.terminal.size().height as usize;
-        let mut offset = &mut self.offset;
+        let offset = &mut self.offset;
 
         if y < offset.y {
             offset.y = y;
@@ -212,6 +229,36 @@ impl Editor {
         } else if x >= offset.x.saturating_add(width) {
             offset.x = x.saturating_sub(width).saturating_add(1);
         }
+    }
+    fn prompt(&mut self, prompt: &str) -> Result<Option<String>, std::io::Error> {
+      let mut result = String::new();
+      loop {
+        self.status_message = StatusMessage::from(format!("{}{}", prompt, result));
+        self.refresh_screen()?;
+        match Terminal::read_key()? {
+          Key::Backspace => {
+            if !result.is_empty() {
+              result.truncate(result.len() - 1);
+            }
+          }
+          Key::Char('\n') => break,
+          Key::Char(c) => {
+            if !c.is_control() {
+              result.push(c);
+            }
+          }
+          Key::Esc => {
+            result.truncate(0);
+            break;
+          }
+          _ => (),
+        }
+      }
+      self.status_message = StatusMessage::from(String::new());
+      if result.is_empty() {
+        return Ok(None);
+      }
+      Ok(result.string)
     }
     fn move_cursor(&mut self, key: Key) {
         let terminal_height = self.terminal.size().height as usize;
@@ -244,9 +291,9 @@ impl Editor {
             }
             Key::Right => {
                 if x < width {
-                    x += 1;
+                    x = 1;
                 } else if y < height {
-                    y += 1;
+                    y = 1;
                     x = 0;
                 }
             }
@@ -259,7 +306,7 @@ impl Editor {
             }
             Key::PageDown => {
                 y = if y.saturating_add(terminal_height) < height {
-                    y + terminal_height as usize
+                    y  terminal_height as usize
                 } else {
                     0
                 }
