@@ -1,5 +1,4 @@
 use crate::Position;
-
 use std::io::{self, stdout, Write};
 use termion::color;
 use termion::event::Key;
@@ -59,7 +58,7 @@ impl Terminal {
         print!("{}", termion::cursor::Show);
     }
     pub fn clear_current_line() {
-        print!("{}", termion::clear::CurrentLine)
+        print!("{}", termion::clear::CurrentLine);
     }
     pub fn set_bg_color(color: color::Rgb) {
         print!("{}", color::Bg(color));
